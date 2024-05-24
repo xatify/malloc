@@ -386,3 +386,291 @@ flags:
 		malloc for large blocks. this is not an issue with the GNU C Library,
 		as the included malloc automatically uses mmap where appropriate.
 
+Resizing the Data Segment:
+	int brk(void *addr)
+	brk sets the high end of the calling process' data segment to addr,
+
+	the address of the end of a segment is defined to be the address of the last
+	byte in the segment plus 1.
+
+	void *sbrk(ptrdiff_t delta)
+	this function is same as brk except that you specify the new end of the 
+	data segment as an offset delta fron the current end and on success the return value 
+	is the address of the resulting end of the data segment instead of zero.
+
+
+File-backed and anonymous:
+File backed mappings maps an area of the process's virtual memory to files;
+that is, eading those areas of memory causes the file to be read. it is the
+deafult mapping type.
+
+Anonymous mapping maps an area of the process's virtual memory not backed 
+by any file. the contents are initialized to zero.
+in this respect an anonymous mapping is similar to malloc, and is used in some
+malloc implementations for certain allocations, particularly large ones.
+
+
+A memory-mapped file is a segment of virtual memory.
+that has been assigned a direct byte-for-byte correlation with some portion 
+of a file or file-like resource.
+this resource is typically a file that is physically present on disk, but can also
+be a device, shared memory object, or other resource that an operating system 
+can reference through a file descriptor.
+
+
+the allocator does not examine the data stored in a block, or modify or act on 
+it in any way.
+the data areas within blocks that are used to hold objects are contiguous and 
+nonoerlapping ranges of (real or virtual) memory.
+
+the worst case performance of any general allocator amounts to complete failure
+due to memory exhaustion or virtual memory thrashing 
+
+What an Allocator Must do:
+- keep track of which parts of memory are in use, and which parts are free.
+- minimize wasted space without undue time cost, or vice versa.
+
+the ideal allocator would spend negligible time managing memory, and waste 
+negligible space.
+
+ - it must respond immediately to request for space, and once it has decided 
+ which block of memory to allocate, it cannot change that decision.
+ - Allocators record the locations and sizes of free blocks of memory in some kind 
+ of hidden data structure. which may be a linear list, a totally or partially 
+ ordered tree, a bitmap, or some hybrid data strcuture.
+ - An Allocator is therefore an online algorithm, which must respond to requests
+ in strict sequence, immediately, and its decisions are irrevocable.
+
+ - The problem the allocator must address is that the application program may
+ free blocks in any order, creating 'holes' amid live objects 
+ - if these holes are too numerous and small, they cannot be used to satisfy
+ future requests for larger blocks
+ this problem is known as fragmenation
+
+ !!! it has been proven that for any possible allocation algorithm, there will
+ always be the possiblity that some application program will allocate and deallocate
+ blocks in some fashion that defeats the allocator's strategy, and force it into
+ severe fragmenation.
+ !!!>>>> Not only are there no provably good allocation algorithms, there are
+ proofs that any allocator will be 'bad' for some possible applications.
+
+
+ the design of memory allocators is currently something of a black art.
+
+ --> there are regularities in program behavior that allocators exploit.
+ - these regularities are exploited by allocators to prevent excessive fragmenation
+
+ the main technique used by allocators to keep fragmentation under control is
+ placement choice.
+ two subsidiary technique techniques are used to help implement that choice:
+	- splitting blocks to satisfy smaller requests.
+	- coalescing of free blocks to yield larger blocks.
+
+Placement choice is simply the choosing of where in free memory to put a requested
+block.
+
+it can place a requested block anywhere it can find a sufficiently large range
+of free memory and anywhere within that range.
+
+=============================
+An Allocator algorithm therefore should be regarded as the mechanism that 
+implements a placement policy which is motivated by a strategy for minimizing 
+fragmentation 
+============================
+
+Strategy:
+	the strategy takes into account regularities in program behavior.
+	and determines a range of acceptable policies as to where to allocate
+	requested blocks.
+	the chosen policy is implemented by a mechanism, which is a set of 
+	algorithms and the data strctures they use.
+
+strategy: attempts to exploit regularities in request stream.
+policy: is an implementable decision procedure for placing blocks in memory.
+mechanism: is a set of algorithms and data structures that implement the
+	policy, often over-simply called 'an algorithm'.
+
+the corresponding (best fit) policy is more concrete-it says "always use the
+smallest block that is at least large enough to satisfy the request"
+
+the placement policy determines exactly where in memory requested blocks will 
+be allocated for the best fit policies
+
+for the best fit policies, the general rule is 'allocate objects in the smallest
+free block that's at least big enough to hold them'
+
+the chosen policy is implemented by a specific mechanism, chosen to implement 
+that policy efficiently in terms of time and space overheads.
+
+for best fit, a linear list or ordered tree structure might be used to record 
+the addresses and sizes of free blocks.
+and a tree seach or list search would be used to find the one dictated by the 
+policy.
+
+
+
+---- Splitting and Coalescing ----
+The allocator may split large blocks into smaller blocks arbitrary, and use
+any sufficiently-large subblock to satisfy future requests.
+
+the remainders from this splitting can be recorded as smaller free blocks in 
+their own right and used to satisfy future requests.
+
+the allocator may also coalesce adjacent free blocks to yield larger free 
+blocks.
+
+after a block is freed, th allocator may check to see whether the neighboring
+blocks are free as well, and merge them into a single, larger block.
+
+this is often desirable, because one large block is more likely to be useful 
+than two small ones, larger or small requests can be satisfied from large 
+blocks.
+
+the cost may not be negligible, however, especially if splitting and coalescing
+work too well, in that case, freed blocks will usually be coalesced with 
+neighbors to form large blocks of free memory, and later allocations will 
+have to split smaller chunks off of those blocks to obtain the desired sizes.
+
+it often turns out that most of this effort is wasted, because the sizes 
+requested later are largely the same as the sizes freed earlier.
+and the old small blocks could have been reused witout coalescing and 
+splitting.
+
+Because of this, many modern allocators use deffered coalscing, they avoid 
+coalescing and splitting most of the time. but use it intermittely, to combat
+fragmenation.
+
+the Allocator should embody a strategy designed to exploit regularities in 
+program behavior, otherwise it cannot be expected to do particularly well.
+
+
+Fragmentation:
+	is the inability to reuse memory that is free.
+
+the problem is a function both of the program's request stream and the
+allocator's choices of where to allocate the requested objects.
+
+An Allocator's inability to reuse memory depends not only on the number and 
+sizes of holes, but on the future use behavior of the program, and the future
+responses of the allocator itself.
+
+
+Header fields and Alignement:
+Most allocators use a hidden 'header' field within each block to store useful
+information.
+the size of the block is recorded in the header.
+
+having information about the block stored with the block makes many common 
+operations fast.
+
+in most situations, there is enough room in one machine word to store a 
+size field plus two or three on-bit 'flags'.
+
+alignement means that partial words cannot be allocated-requests for
+non-integral numbers of words are rounded up to the nearest word.
+
+to support the coalscing of free areas. each block of memory has a both 
+header and footer field, both of which record the size of the block and whether
+it is in use.
+
+when a block is freed, the footer of the preceding block of memory is examined.
+adjacent free areas are merged to form larger free blocks.
+
+Header anf footer overhead are likely to be significant
+with an average object size of about 10 words,
+for example, a one-word header incurs a 10% overhead and a one-word footer 
+incurs another 10%.
+
+
+when a block is in use (holding a live object), the size field in the footer
+is not actually needed-all that is needed is the flag bit saying that the storage
+is an available for coalescing, the size field if only needed when the block is 
+free, so that it's head can be located for coalescing.
+the size field can therfore be taken out of the last word of the block of memory 
+when the block is allocated. it can be used to hold part of the object.
+when the object is freed, the size field can be copied from the header into the 
+footer, because that space is not longer needed to hold part of the object.
+
+the single bit needed to indicate whether a block is in use can be stolen
+from the header word of the following block without unduly limiting 
+the range of the size field.
+
+link fields within blocks: for allocators using free lists or indexing trees to
+keep track of free blocks the list or tree nodes are generally embodded in the 
+free blocks themselves.
+since only free blocks are recorded, and since their space would otherwise 
+be wasted, it is usually considered reasonable to use the space within the 
+"empty" blocks to hold pointers linking them together. space for indexing 
+structure is therefore "free" (almost).
+
+Many systems use doubly-linked linear lists, with a "previous" and "next" pointer 
+taken out of the free area.
+
+
+the hidden cost of putting link fields within blocks is that the block must 
+be big enough to hold them, along with the header field and footer field
+this imposes a minimum block size on the allocator implementation 
+and any smaller requests must be rounded up to that size.
+
+A common situation is having a header with a size field and boundary tags, 
+plus two pointers in each block.
+
+
+Lookup Table:
+	Some allocators treat blocks within ranges os sizes similarly-rather 
+	than indexing free blocks by their exact size, they lump together blocks
+	of roughly the same size, the size range may also be important to the
+	coalesing mechanism. Powers of two are coarse, however, and can have
+	drawbacks.
+
+in most systems, many more small objects are allocated than large ones,
+it is therfore often worthwhile to treat small objects specially, in one 
+sense or another, this can usually be done by havning the allocator 
+check to see if the size is small, and if so, use an optimized technique 
+for small values, for large values, it may use slower technique.
+
+
+the basic idea here is to ensure that the time spent allocating a block is 
+small relative to the computations on the data it holds.
+
+The allocator allocates memory to programs on request, but the allocator 
+itself must get memory from somewhere.
+
+the most common situation in modern systems is that the heap occupies a range 
+of virtual addresses and grows 'upward' through the address space.
+
+to request more virtual memory a system call such as the UNIX brk() call 
+is used to request that storage can be mapped to that region of address space.
+so that it can be used to hold data.
+
+typically the allocator keeps a 'high-water mark' that divides the memory
+into the part that is backed by storage and the part that is not.
+
+we will genrally assume that a paged virtual memrory is in use. in that case
+the sytem call that obtains more memory obtains some integral number of pages.
+
+
+-- Sequential Fits -----
+
+several classic allocator algorithms are based on having a single linear list
+of all free blocks of memory.
+
+the list is often doubly-linked and/or circularly-linked.
+Typically, sequential fits algorithms use knuth's boundary tag technique, and 
+a doubly-linked list to make coalescing simple and fast.
+
+Best fit:
+	A best fit sequential fits allocator searches the free list to find the 
+	smallest free block large enough to satisfy a request.
+
+First Fit:
+	simply searches the list from the beginning, and uses the first free block
+	large enough to satisfy the request. if the block is larger than necessary,
+	it is split and the remainder is put on the free list.
+
+	A problem with sequential first fit is that the larger blocks near the 
+	begining of the list tend to be split first, and the remaining fragments
+	result in having a lot of small blocks near the beginning of the list.
+
+Segregated Free Lists:
+	one of the 
