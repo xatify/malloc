@@ -674,3 +674,97 @@ First Fit:
 
 Segregated Free Lists:
 	one of the 
+
+
+- malloc allocates at least the number of bytes requested.
+- the pointer returned by malloc points to an allocated space.
+- No other call to malloc will allocate this space or any portion of it, unless
+the pointer has been freed before.
+- malloc should be tracable: malloc must terminate in as soon as possible.
+- malloc should also provide resizing and freeing.
+
+the process's Memory:
+	each process has its own virtual address space dynamically translated into
+	physical memory address space by the MMU.
+
+
+unorganized space for program's data called the heap.
+
+the heap is a continuous (in term of virtual addresses) space of memory with
+3 bounds:
+	- a starting point,
+	- a maximum limit (managed through sys/ressource.h functions getrlimit (2)
+	and settlimit(2))
+	- and an end point called the break.
+
+the break marks the end of the mapped memory space, that is, the part of the
+virtual adress space that has correspondance into real memory.
+
+
+
+Unmapped Region's and No-Man's Land:
+
+memeory is mapped by pages: physical memory and virtual memory is organized
+in pages.
+the page size is by far bigger than one byte.
+the break might not be on pages boundary.
+
+
+
+
+for a 32-bit architecture, the data may be aligned if the data is stored in
+four consecutive bytes and the first byte lies on a 4-byte boundary.
+
+
+A memory address a is said to be n-byte aligned when a is a multiple of n 
+where n is a power of 2, in this context, a byte is the smallest unit of memory
+access, each memory address specifies a different byte.
+
+An n-byte aligned address would have a minimum of log2(n) least-significant zeros 
+when expressed in binary.
+
+
+A First Fit Malloc:
+we traverse the chunks list and stop when we find a free block with enough 
+space for the requested allocation.
+
+
+
+A major issue of malloc is fragementation: after several use of malloc and free,
+we end up with a heap divided in many chunks individually to small to satisfy 
+big malloc while the whole free space would have been sufficient,
+this issue is known as the space fragmentation problem.
+
+
+A solution to eliminate some fragmentation is to fusion free chunks.
+when we free a chunk, and it's neighbors are also free, we can fusion them in
+one bigger chunk.
+
+all we have to do is to test the next and previous chunks.
+
+the other free's issue is to find, efficiently, the correct chunk with only the
+pointer returned by malloc, in fact , there are several isssue here.
+
+	- validating the inout pointer (is it really a malloc'ed pointer ??)
+	- finding the meta-data pointer.
+
+How can we be sure that a pointer was obtained by malloc?
+
+A solution is to have some magic number inside the block structure
+
+
+---- With performance in mind, you must limit the number of calls to mmap(),
+but also to mmunmap(), you have to preallocate some memory zones to store 
+your "small" and "medium" malloc.
+
+the sizeof this zones must be a multiple of getpagesize()
+
+each zone must contain at least 100 allocations.
+	- TINY mallocs, from 1 to n bytes, will be stored in N bytes big zones.
+	- SMALL mallocs, from (n + 1) to m bytes, will be stored in M bytes big zones
+	- LARGE mallocs, from (m + 1) bytes and more, will be stored out of zone,
+	which simply means with mmap(), they will be in a zone on their own.
+
+it's up to you to define the size of n, m, N, and M so that you find a good compromise
+between speed and saving memory.
+
