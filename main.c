@@ -43,7 +43,6 @@ typedef struct zone
  * of this block
  * what does size mean in this case ?
  * the data size that can be/is requested by the application.
- * the LSB bit is used as a flag, to indicate if it's free or not
  */
 typedef struct s_block
 {
@@ -289,3 +288,4 @@ void *v1malloc(size_t size)
 	
 	return data_pointer(b);
 }
+
