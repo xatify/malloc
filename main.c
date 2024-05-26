@@ -78,13 +78,16 @@ inline size_t roundup(size_t size, size_t r)
 # define MINBLOCKNUM	100
 
 /**
+ * @brief return a pointer to the block
+ * given the data pointer
+*/
+#define BLOCK(dp) ((t_block *)((char*)dp - sizeof(t_block)))
+
+/**
  * given an allocated block
  * return the address of the data
 */
-inline void *data_pointer(t_block *b)
-{
-	return ((char *)b + sizeof(t_block));
-}
+#define DATA(b) ((char *)b + sizeof(t_block))
 
 /**
  * given the size we return the zone type that
@@ -263,32 +266,6 @@ t_block *try_split(t_block *b, size_t size)
 	return (b);
 }
 
-
-/**
- * v1
- * 
- * @param size 
- * @return void* 
- */
-void *malloc(size_t size)
-{
-	t_block *b;
-
-	// check for size 0
-	if (size == 0)
-		return NULL;
-
-	// try to find a free block
-	b = get_free_block(size);
-	if (!b)
-		return NULL;
-	// check if we can split the block
-	b = try_split(b, size);
-	b->free = false;
-	
-	return data_pointer(b);
-}
-
 /**
  * get the last mapped address
  * 
@@ -366,6 +343,48 @@ bool free_zone(t_zone *z)
 }
 
 /**
+ * @brief copy data from source block
+ * to dest block, using alignment
+ * 
+*/
+void copy(t_block *bdst, t_block *bsrc)
+{
+	size_t	i;
+
+	i = 0;
+	while (i < bsrc->size)
+	{
+		*((char *)DATA(bdst) + i) = *((char *)DATA(bsrc) + i);
+		i++;
+	}
+}
+
+/**
+ * v1
+ * 
+ * @param size 
+ * @return void* 
+ */
+void *malloc(size_t size)
+{
+	t_block *b;
+
+	// check for size 0
+	if (size == 0)
+		return NULL;
+
+	// try to find a free block
+	b = get_free_block(size);
+	if (!b)
+		return NULL;
+	// check if we can split the block
+	b = try_split(b, size);
+	b->free = false;
+	
+	return DATA(b);
+}
+
+/**
  * we need to check if the given ptr
  * falls in the mapped region
  * 
@@ -427,3 +446,36 @@ void	free(void *ptr)
 		}
 	}
 }
+
+
+
+void *realloc(void *ptr, size_t size)
+{
+	t_block	*b;
+	t_zone	*z;
+	void	*p;
+	t_block	*nb;
+
+	// special cases
+	if (ptr == NULL)
+		return (malloc(ptr));
+	if (size == 0 && ptr != NULL)
+	{
+		free(ptr);
+		return (NULL);
+	}
+	// if the block can hold the 
+	// the size we return it as is no
+	b = (t_block *)((char *)ptr - sizeof(t_block));
+	if (ALIGN8(size) <= b->size)
+		return (ptr);
+	
+	// otherwise we need to find a new block to
+	// hold size data
+	// copy the old data there
+	p = malloc(size);
+	copy(BLOCK(p), b);
+	free(b);
+	return (p);
+}
+
