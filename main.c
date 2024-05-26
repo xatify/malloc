@@ -136,7 +136,7 @@ void init_fblock(t_zone *z, size_t size)
 	b->next = NULL;
 	b->prev = NULL;
 	b->free = true;
-	b->size = size - sizeof(t_zone) - sizeof(t_block)
+	b->size = size - sizeof(t_zone) - sizeof(t_block);
 }
 
 
