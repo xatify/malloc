@@ -160,7 +160,7 @@ t_zone	*init_new_zone(void *last, size_t size)
 	if (last != NULL)
 		zstart = last + ((t_zone *)last)->size;
 	zstart = mmap(zstart, to_alloc, PROT_READ | PROT_WRITE, \
-		MAP_PRIVATE, -1, 0);
+		MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 	if (zstart == MAP_FAILED)
 		return NULL;
 	zone = (t_zone *)zstart;
