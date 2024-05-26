@@ -3,6 +3,9 @@
 #include <stdbool.h>
 #include <unistd.h>
 
+#include <sys/mman.h>
+
+
 /**
  * starting address of the heap
  */
@@ -24,8 +27,6 @@ typedef enum e_ztype
  * what does the size mean in this case]
  * the size that is used to call mmap to 
  * allocate this zone.
- * we will use the last 2 bit to indicate
- * the type of the the zone
  */
 typedef struct zone
 {
@@ -61,7 +62,7 @@ typedef struct s_block
 /**
  * same as ALIGN8 but for page size
 */
-size_t roundup(size_t size, size_t r)
+inline size_t roundup(size_t size, size_t r)
 {
 	return (((size - 1) / r) * r) + r;
 }
@@ -77,6 +78,14 @@ size_t roundup(size_t size, size_t r)
 */
 # define MINBLOCKNUM	100
 
+/**
+ * given an allocated block
+ * return the address of the data
+*/
+inline void *data_pointer(t_block *b)
+{
+	return ((char *)b + sizeof(t_block));
+}
 
 /**
  * given the size we return the zone type that
@@ -102,41 +111,90 @@ t_ztype zone_type(size_t size)
 size_t zone_size(t_ztype type, size_t size)
 {
 	int		ps;
-	size_t	s;
 
 	ps = getpagesize();
 	if (type == TINY)
-	{
-		s = sizeof(t_zone) + (sizeof(t_block) + TINYMAXSIZE) * MINBLOCKNUM;
-		return (roundup(s, ps));
-	}
+		size = sizeof(t_zone) + (sizeof(t_block) + TINYMAXSIZE) * MINBLOCKNUM;
 	else if (type == SMALL)
-	{
-		s = sizeof(t_zone) + (sizeof(t_block) + SMALLMAXSIZE) * MINBLOCKNUM;
-		return (roundup(s, ps));
-	}
+		size = sizeof(t_zone) + (sizeof(t_block) + SMALLMAXSIZE) * MINBLOCKNUM;
 	// we need to get the minimum number of pages
 	// to hold that size
 	return roundup(size, ps);
 }
 
-/**
- * create a new zone and attach it to last
- * last can be NULL, which means this is the
- * first zone that we will allocate
-*/
-t_zone	*create_new_zone(t_zone *last, size_t size)
-{
-	t_ztype		type;
-	size_t		to_allocate;
 
-	type = zone_type(size);
-	if (type == TINY)
-	{
-		to_allocate = ((size - 1) / ps 
-	}
+/**
+ * initiatize a free block that will span the
+ * entire zone
+ * @param z new created zone
+ * @param size the allocated region for that zone
+ */
+void init_fblock(t_zone *z, size_t size)
+{
+	t_block *b;
+
+	b = (t_block *)((char *)z + sizeof(t_zone));
+	b->next = NULL;
+	b->prev = NULL;
+	b->free = true;
+	b->size = size - sizeof(t_zone) - sizeof(t_block)
 }
 
+
+/**
+ * create a new zone and attach it to last,
+ * zstart can be NULL, which means this is the
+ * first zone that we will allocate
+ * zstart should be an address to the last
+ * mapped zone
+*/
+t_zone	*init_new_zone(void *last, size_t size)
+{
+	t_ztype		type;
+	size_t		to_alloc;
+	t_zone		*zone;
+	void 		*zstart;
+
+	zstart = last;
+	type = zone_type(size);
+	to_alloc = zone_size(type, size);
+	if (last != NULL)
+		zstart = last + ((t_zone *)last)->size;
+	zstart = mmap(zstart, to_alloc, PROT_READ | PROT_WRITE, \
+		MAP_PRIVATE, -1, 0);
+	if (zstart == MAP_FAILED)
+		return NULL;
+	zone = (t_zone *)zstart;
+	zone->next = NULL;
+	zone->prev = last;
+	if (last != NULL)
+		((t_zone *)last)->next = zone;
+	zone->size = to_alloc;
+	zone->type = type;
+	init_fblock(zone, to_alloc);
+	return (zone);
+}
+
+/**
+ * @brief iterate over a zone to find a free block
+ * 
+ * @param z zone
+ * @param sz the size block must be >= sz 
+ * @return t_block* pointer to the free zone
+ */
+t_block *find_fblock(t_zone *z, size_t sz)
+{
+	t_block		*b;
+
+	b = (t_block *)((char *)z + sizeof(t_zone));
+	while (b)
+	{
+		if ((b->free == true) && (b->size >= ALIGN8(sz)))
+			break ;
+		b = b->next;
+	}
+	return (b);
+}
 
 /**
  * this is the main part of malloc
@@ -163,18 +221,9 @@ t_block *get_free_block(size_t size)
 		// we check if this is the right zone given the size
 		if (z->type == zone_type(size))
 		{
-			// we check if it has available free blocks
-			// that can hold that data
-			b = (t_block *)((char *)z + sizeof(t_zone));
-			while (b)
-			{
-				if (b->size >= size && b->free == true)
-				{
-					// we found a free block
-					return (b);
-				}
-				b = b->next;
-			}
+			b = find_fblock(z, size);
+			if (b)
+				return (b);
 			// no block found
 		}
 		// we go to next zone
@@ -185,7 +234,10 @@ t_block *get_free_block(size_t size)
 	// we need to create a new one
 	// and attach it to last zone
 	z = create_new_zone(last, size);
-
+	if (z == NULL)
+		return (NULL);
+	// this is guaranted to succed
+	return (find_fblock(z, size));
 }
 
 /**
@@ -193,14 +245,25 @@ t_block *get_free_block(size_t size)
  * needs to hold we try to split it
  * and return the right part of the split
 */
-t_block *try_split(t_block *b, size_t size);
+t_block *try_split(t_block *b, size_t size)
+{
+	t_block		*newb;
 
+	if (b->size >= (ALIGN8(size) + sizeof(t_block)))
+	{
+		newb = (t_block *)((char *)b + ALIGN8(size));
+		newb->size = b->size - (ALIGN8(size) + sizeof(t_block));
+		newb->free = true;
+		newb->prev = b;
+		b->next = newb;
+		newb->next = b->next;
+		if (b->next)
+			b->next->prev = newb;
+		return (newb);
+	}
+	return (b);
+}
 
-/**
- * given an allocated block
- * return the data pointer
-*/
-void *data_pointer(t_block *b);
 
 /**
  * v1
@@ -222,10 +285,6 @@ void *v1malloc(size_t size)
 		return NULL;
 	// check if we can split the block
 	b = try_split(b, size);
-
-	// set the size of the block
-	// and label it as not free
-	b->size = size;
 	b->free = false;
 	
 	return data_pointer(b);
