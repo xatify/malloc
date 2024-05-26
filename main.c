@@ -270,7 +270,7 @@ t_block *try_split(t_block *b, size_t size)
  * @param size 
  * @return void* 
  */
-void *v1malloc(size_t size)
+void *malloc(size_t size)
 {
 	t_block *b;
 
@@ -289,3 +289,141 @@ void *v1malloc(size_t size)
 	return data_pointer(b);
 }
 
+/**
+ * get the last mapped address
+ * 
+ * @return void* 
+ */
+void *last_maddress()
+{
+	t_zone *z;
+
+	z = (t_zone *)pbreak;
+	while (z && z->next)
+		z = z->next;
+	
+	if (z)
+		return ((char *)z + z->size);
+	return NULL;
+}
+
+/**
+ * @brief given a block 
+ * return the zone it belongs to
+ * @param b 
+ * @return t_zone* 
+ */
+t_zone *get_zone_from_block(t_block *b)
+{
+	while (b && b->prev)
+		b = b->prev;
+	return (t_zone *)((char *)b - sizeof(t_zone));
+}
+
+/**
+ * @brief merge a block with it's next block
+ * if it's free too
+ * 
+ * @param b block
+ * @return t_block *
+ */
+t_block	*coalesce_block(t_block *b)
+{
+	t_block *tmp;
+
+	if (b && b->next && b->next->free)
+	{
+		tmp = b->next;
+		b->next = b->next->next;
+		if (tmp->next)
+			tmp->next->prev = b;
+		b->size = b->size + tmp->size + sizeof(t_block);
+		b->free = true;
+	}
+	return (b);
+}
+
+
+/**
+ * @brief check if the zone is all free
+ * 
+ * @param z 
+ * @return true 
+ * @return false
+ */
+bool free_zone(t_zone *z)
+{
+	t_block		*b;
+
+	b = (t_block *)((char *)z + sizeof(t_zone));
+	while (b)
+	{
+		if (b->free == false)
+			return false;
+		b = b->next;
+	}
+	return (true);
+}
+
+/**
+ * we need to check if the given ptr
+ * falls in the mapped region
+ * 
+ * @param ptr 
+ */
+void	free(void *ptr)
+{
+	t_block *b;
+	t_zone	*z;
+
+	if (!ptr)
+		return ;
+	b = (t_block *)((char *)ptr - sizeof(t_block));
+	if (b->free == false)
+	{
+		z = get_zone_from_block(b);
+		if (z->type == SMALL || z->type == TINY)
+		{
+			// no coalscing needed here 
+			// we just set the block to free
+			b->free = true;
+		}
+		else
+		{
+			// this block belongs to large zone
+			// we need to do coalescing
+			while (b)
+			{
+				b = coalesce_block(b);
+				if (b->prev && b->prev->free)
+					b = coalesce_block(b->prev);
+				else
+					break ;
+			}
+			b->free = true;
+		}
+		// if this is the last zone
+		// we check if it's all free and return it
+		// to the system.
+		if (z->next == NULL)
+		{
+			if (free_zone(z))
+			{
+				if (z->prev)
+				{
+					z->prev->next = NULL;
+				}
+				else
+				{
+					// the first zone;
+					// we need to set pbreak to NULL
+					// return all the mapped memory to
+					// the system
+					pbreak = NULL;
+				}
+				if (munmap((void *)z, z->size) == -1)
+					return ;
+			}
+		}
+	}
+}
