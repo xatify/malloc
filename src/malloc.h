@@ -23,7 +23,7 @@
 /**
  * starting address of the heap
  */
-void *pbreak;
+extern void *pbreak;
 
 /**
  * Zone type
@@ -41,10 +41,10 @@ typedef enum e_ztype
  * the size that is used to call mmap to 
  * allocate this zone.
  */
-typedef struct zone
+typedef struct s_zone
 {
-	t_zone	*next;
-	t_zone	*prev;
+	struct s_zone	*next;
+	struct s_zone *prev;
 	size_t	size;
 	t_ztype type;
 }	t_zone;
@@ -57,8 +57,8 @@ typedef struct zone
  */
 typedef struct s_block
 {
-	t_block	*next;
-	t_block *prev;
+	struct s_block	*next;
+	struct s_block	*prev;
 	size_t	size;
 	bool free;
 }	t_block;

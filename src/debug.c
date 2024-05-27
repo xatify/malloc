@@ -53,7 +53,7 @@ void print_zone(t_zone *z)
 	
 	ft_write(ZTYPES[z->type]);
 	ft_write(" : ");
-	ft_write(hexa_address(z, buf, 16));
+	ft_write(print_base(z, buf, 16, 16));
 	ft_write("\n");
 
 	t_block *b;

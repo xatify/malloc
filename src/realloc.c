@@ -21,7 +21,7 @@ void *realloc(void *ptr, size_t size)
 
 	// special cases
 	if (ptr == NULL)
-		return (malloc(ptr));
+		return (malloc(size));
 	if (size == 0 && ptr != NULL)
 	{
 		free(ptr);

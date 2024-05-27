@@ -81,8 +81,8 @@ t_block *get_free_block(size_t size)
 			// no block found
 		}
 		// we go to next zone
-		z = z->next;
 		last = z;
+		z = z->next;
 	}
 	// no block found on any zone.
 	// we need to create a new one
@@ -90,7 +90,6 @@ t_block *get_free_block(size_t size)
 	z = init_new_zone(last, size);
 	if (z == NULL)
 		return (NULL);
-	if (pbreak)
 	// this is guaranted to succed
 	return (find_fblock(z, size));
 }
@@ -106,15 +105,15 @@ t_block *try_split(t_block *b, size_t size)
 
 	if (b->size >= (ALIGN8(size) + sizeof(t_block)))
 	{
-		newb = (t_block *)((char *)b + ALIGN8(size));
+		newb = (t_block *)((char *)b + sizeof(t_block) + ALIGN8(size));
 		newb->size = b->size - (ALIGN8(size) + sizeof(t_block));
 		newb->free = true;
 		newb->prev = b;
-		b->next = newb;
-		newb->next = b->next;
 		if (b->next)
 			b->next->prev = newb;
-		return (newb);
+		newb->next = b->next;
+		b->next = newb;
+		b->size = ALIGN8(size);
 	}
 	return (b);
 }

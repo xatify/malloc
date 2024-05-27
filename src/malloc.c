@@ -18,6 +18,9 @@
  * @param size 
  * @return void* 
  */
+
+void *pbreak = NULL;
+
 void *malloc(size_t size)
 {
 	t_block *b;
