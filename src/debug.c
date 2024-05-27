@@ -6,7 +6,7 @@
 /*   By: abbouzid <abbouzid@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/26 23:39:36 by abbouzid          #+#    #+#             */
-/*   Updated: 2024/05/27 00:45:29 by abbouzid         ###   ########.fr       */
+/*   Updated: 2024/05/27 01:07:55 by abbouzid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,8 +19,7 @@ const static char* ZTYPES[] = {
 	"LARGE",
 };
 
-
-static char *hexa_address(void *ptr, char *buf, int s)
+static char *print_base(void *ptr, char *buf, int s, int base)
 {
 	size_t sptr = (size_t )ptr;
 	int			c;
@@ -30,16 +29,20 @@ static char *hexa_address(void *ptr, char *buf, int s)
 	buf[s] = '0';
 	while (sptr)
 	{
-		c = sptr % 16;
-		c = (c >= 10) ? 'A' + (16 - c): c + '0';
+		c = sptr % base;
+		c = (c >= 10) ? 'A' + (base - c): c + '0';
 		buf[s] = c;
-		sptr = sptr / 16;
+		sptr = sptr / base;
 		if (sptr)
 			s--;
 	}
-	s--;
-	buf[--s] = 'x';
-	buf[--s] = '0';
+	if (base == 16)
+	{
+		
+		s--;
+		buf[--s] = 'x';
+		buf[--s] = '0';
+	}
 	return (buf + s);
 }
 
@@ -60,16 +63,15 @@ void print_zone(t_zone *z)
 	{
 		if (b->free == false)
 		{
-			ft_write(hexa_address(DATA(b), buf, 16));
+			ft_write(print_base(DATA(b), buf, 16, 16));
 			ft_write(" - ");
-			ft_write(hexa_address(DATA(b) + b->size, buf, 16));
+			ft_write(print_base(DATA(b) + b->size, buf, 16, 16));
 			ft_write(" : ");
-			ft_write(iprint(b->size. buf, 16));
+			ft_write(print_base((unsigned char *)(b->size), buf, 16, 16));
 			ft_write(" bytes\n");
 		}
 		b = b->next;
 	}
-	
 }
 
 
