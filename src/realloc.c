@@ -6,7 +6,7 @@
 /*   By: abbouzid <abbouzid@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/26 23:24:54 by abbouzid          #+#    #+#             */
-/*   Updated: 2024/05/26 23:38:52 by abbouzid         ###   ########.fr       */
+/*   Updated: 2024/05/27 18:01:57 by abbouzid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,9 +15,7 @@
 void *realloc(void *ptr, size_t size)
 {
 	t_block	*b;
-	t_zone	*z;
 	void	*p;
-	t_block	*nb;
 
 	// special cases
 	if (ptr == NULL)
@@ -37,7 +35,10 @@ void *realloc(void *ptr, size_t size)
 	// hold size data
 	// copy the old data there
 	p = malloc(size);
-	ft_memcpy(p, DATA(b), b->size);
-	free(b);
+	ft_memcpy(p, ptr, b->size);
+	free(ptr);
+#ifdef DEBUG
+	show_alloc_mem();
+#endif
 	return (p);
 }

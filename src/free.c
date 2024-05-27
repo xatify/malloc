@@ -6,7 +6,7 @@
 /*   By: abbouzid <abbouzid@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/26 23:23:12 by abbouzid          #+#    #+#             */
-/*   Updated: 2024/05/26 23:23:52 by abbouzid         ###   ########.fr       */
+/*   Updated: 2024/05/27 17:22:03 by abbouzid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,5 +72,8 @@ void	free(void *ptr)
 					return ;
 			}
 		}
+#ifdef DEBUG
+		show_alloc_mem();
+#endif
 	}
 }
