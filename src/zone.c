@@ -44,7 +44,11 @@ size_t zone_size(t_ztype type, size_t size)
 		size = sizeof(t_zone) + (sizeof(t_block) + SMALLMAXSIZE) * MINBLOCKNUM;
 	// we need to get the minimum number of pages
 	// to hold that size
-	return roundup(size, ps);
+	
+	/*some programs request the size of page size*/
+	/*in that case it will round to itself, and no more*/
+	/*space for zone header and block header*/
+	return roundup(size + sizeof(t_block) + sizeof(t_zone), ps);
 }
 
 /**

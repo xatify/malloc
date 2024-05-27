@@ -15,7 +15,7 @@ ifeq ($(HOSTTYPE),)
 endif
 
 CC		= gcc
-CFLAGS	= -Wall -Wextra -Werror
+CFLAGS	= -g -DDEBUG -Wall -Wextra -Werror
 
 LIBFT =	src/libft/libft.a
 
@@ -26,25 +26,26 @@ SRCS =		src/block.c	\
 			src/debug.c		\
 			src/free.c		\
 			src/malloc.c	\
-			src/realloc.c
+			src/realloc.c  	\
+			src/libft/ft_memcpy.c 	\
+			src/libft/ft_strlen.c	\
+			src/libft/ft_write.c	\
+			src/libft/roundup.c
 
 OBJS = $(SRCS:.c=.o)
 
 all: $(TARGET)
 
-$(TARGET): $(LIBFT) $(OBJS)
-	$(CC) $(CFLAGS) -shared -L./src/libft -lft $(OBJS) -o $(TARGET)
+$(TARGET): $(OBJS)
+	$(CC) $(CFLAGS) -shared $(OBJS) -o $(TARGET)
 
 .c.o:
 	$(CC) -c $(CFLAGS) -fPIC $< -o $@
 
-$(LIBFT):
-	make -C src/libft
 
 clean:
 	rm -rf $(OBJS)
 
 fclean: clean
 	rm -rf $(TARGET)
-	make -C ./src/libft fclean
 
