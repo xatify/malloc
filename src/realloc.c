@@ -6,7 +6,7 @@
 /*   By: abbouzid <abbouzid@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/26 23:24:54 by abbouzid          #+#    #+#             */
-/*   Updated: 2024/05/27 18:18:16 by abbouzid         ###   ########.fr       */
+/*   Updated: 2024/05/28 14:16:42 by abbouzid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,12 +25,16 @@ void	*realloc(void *ptr, size_t size)
 		return (NULL);
 	}
 	b = (t_block *)((char *)ptr - sizeof(t_block));
-	if (((((size - 1) >> 3) << 3) + 8) <= b->size)
+	if (((((size - 1) >> 4) << 4) + 16) <= b->size)
 		return (ptr);
 	p = malloc(size);
 	if (p == NULL)
 		return (NULL);
 	ft_memcpy(p, ptr, b->size);
 	free(ptr);
+
+#ifdef DEBUG
+	show_alloc_mem();
+#endif
 	return (p);
 }

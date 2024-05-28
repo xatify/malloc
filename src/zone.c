@@ -6,7 +6,7 @@
 /*   By: abbouzid <abbouzid@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/26 23:25:46 by abbouzid          #+#    #+#             */
-/*   Updated: 2024/05/26 23:48:26 by abbouzid         ###   ########.fr       */
+/*   Updated: 2024/05/28 14:15:50 by abbouzid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,7 @@ t_ztype	zone_type(size_t size)
 {
 	size_t	as;
 
-	as = ((((size - 1) >> 3) << 3) + 8);
+	as = ((((size - 1) >> 4) << 4) + 16);
 	if (as <= TINYMAXSIZE)
 		return (TINY);
 	else if (as <= SMALLMAXSIZE)

@@ -6,7 +6,7 @@
 /*   By: abbouzid <abbouzid@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/26 23:02:23 by abbouzid          #+#    #+#             */
-/*   Updated: 2024/05/26 23:44:18 by abbouzid         ###   ########.fr       */
+/*   Updated: 2024/05/28 15:38:15 by abbouzid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,8 +66,8 @@ typedef struct s_block
 /**
  * max data size in tiny/small zone
 */
-# define TINYMAXSIZE	8
-# define SMALLMAXSIZE	16
+# define TINYMAXSIZE	16
+# define SMALLMAXSIZE	32
 
 /**
  * minimum number of blocks in tiny

@@ -6,7 +6,7 @@
 /*   By: abbouzid <abbouzid@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/26 23:23:12 by abbouzid          #+#    #+#             */
-/*   Updated: 2024/05/27 17:22:03 by abbouzid         ###   ########.fr       */
+/*   Updated: 2024/05/28 14:53:21 by abbouzid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,16 +50,27 @@ void	free(void *ptr)
 		b->free = true;
 		release_zone(z);
 	}
+
+#ifdef DEBUG
+	show_alloc_mem();
+#endif
 }
 
 static void	release_zone(t_zone *z)
 {
+	t_zone	*tmp;
+
+	tmp = NULL;
 	if (z->next == NULL && free_zone(z))
 	{
-		if (z->prev)
+		if (z->prev) {
+			tmp = z->prev;
 			z->prev->next = NULL;
+		}
 		else
 			g_pbreak = NULL;
 		munmap((void *)z, z->size);
 	}
+	if (tmp)
+		release_zone(tmp);	
 }

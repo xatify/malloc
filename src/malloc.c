@@ -6,7 +6,7 @@
 /*   By: abbouzid <abbouzid@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/26 23:24:12 by abbouzid          #+#    #+#             */
-/*   Updated: 2024/05/27 17:23:11 by abbouzid         ###   ########.fr       */
+/*   Updated: 2024/05/28 14:29:52 by abbouzid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,5 +34,10 @@ void	*malloc(size_t size)
 		return (NULL);
 	b = try_split(b, size);
 	b->free = false;
+	
+#ifdef DEBUG
+	show_alloc_mem();
+#endif
+
 	return ((char *)b + sizeof(t_block));
 }
