@@ -13,7 +13,7 @@
 #ifndef LIBFT_H
 # define LIBFT_H
 
-#include <stddef.h>
+# include <stddef.h>
 
 size_t	ft_strlen(const char *str);
 void	ft_write(const char *str);

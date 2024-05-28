@@ -13,17 +13,17 @@
 #ifndef MALLOC_H
 # define MALLOC_H
 
-#include <stddef.h>
-#include <stdbool.h>
-#include <unistd.h>
-#include <sys/mman.h>
+# include <stddef.h>
+# include <stdbool.h>
+# include <unistd.h>
+# include <sys/mman.h>
 
-#include "libft/libft.h"
+# include "libft/libft.h"
 
 /**
  * starting address of the heap
  */
-extern void *pbreak;
+extern void	*g_pbreak;
 
 /**
  * Zone type
@@ -33,20 +33,20 @@ typedef enum e_ztype
 {
 	TINY,
 	SMALL,
-	LARGE, 
+	LARGE,
 }	t_ztype;
 
 /**
- * what does the size mean in this case]
+ * what does the size mean in this case
  * the size that is used to call mmap to 
  * allocate this zone.
  */
 typedef struct s_zone
 {
 	struct s_zone	*next;
-	struct s_zone *prev;
-	size_t	size;
-	t_ztype type;
+	struct s_zone	*prev;
+	size_t			size;
+	t_ztype			type;
 }	t_zone;
 
 /**
@@ -59,39 +59,21 @@ typedef struct s_block
 {
 	struct s_block	*next;
 	struct s_block	*prev;
-	size_t	size;
-	bool free;
+	size_t			size;
+	bool			free;
 }	t_block;
-
-
-/**
- * align on 64-bit
-*/
-# define ALIGN8(x) ((((x - 1) >> 3) << 3) + 8)
 
 /**
  * max data size in tiny/small zone
 */
 # define TINYMAXSIZE	8
 # define SMALLMAXSIZE	16
+
 /**
  * minimum number of blocks in tiny
  * and small zones
 */
 # define MINBLOCKNUM	100
-
-/**
- * @brief return a pointer to the block
- * given the data pointer
-*/
-#define BLOCK(dp) ((t_block *)((char*)dp - sizeof(t_block)))
-
-/**
- * given an allocated block
- * return the address of the data
-*/
-#define DATA(b) ((char *)b + sizeof(t_block))
-
 
 t_ztype	zone_type(size_t size);
 size_t	zone_size(t_ztype type, size_t size);
@@ -104,9 +86,9 @@ t_zone	*get_zone_from_block(t_block *b);
 t_block	*coalesce_block(t_block *b);
 bool	free_zone(t_zone *z);
 
-
 void	*malloc(size_t size);
 void	free(void *ptr);
 void	*realloc(void *ptr, size_t size);
-void	show_alloc_mem();
+void	show_alloc_mem(void);
+
 #endif

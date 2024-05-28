@@ -12,7 +12,7 @@
 
 #include "libft.h"
 
-size_t roundup(size_t size, size_t r)
+size_t	roundup(size_t size, size_t r)
 {
-	return (((size - 1) / r) * r) + r;
+	return ((((size - 1) / r) * r) + r);
 }

@@ -13,32 +13,26 @@
 #include "malloc.h"
 
 /**
- * v1
- * 
+ * we find a free block, we acquire a zone
+ * if no block is available
+ * the first block in a zone, takes the entire zone.
+ * we split the block if it has more available space.
  * @param size 
- * @return void* 
+ * @return void* data pointer
  */
 
-void *pbreak = NULL;
+void	*g_pbreak = NULL;
 
-void *malloc(size_t size)
+void	*malloc(size_t size)
 {
-	t_block *b;
+	t_block	*b;
 
-	// check for size 0
 	if (size == 0)
-		return NULL;
-
-	// try to find a free block
+		return (NULL);
 	b = get_free_block(size);
 	if (!b)
-		return NULL;
-	// check if we can split the block
+		return (NULL);
 	b = try_split(b, size);
 	b->free = false;
-
-#ifdef DEBUG
-	show_alloc_mem();
-#endif	
-	return DATA(b);
+	return ((char *)b + sizeof(t_block));
 }

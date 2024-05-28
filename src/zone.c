@@ -16,11 +16,11 @@
  * given the size we return the zone type that
  * a block that holds size data belongs to
 */
-t_ztype zone_type(size_t size)
+t_ztype	zone_type(size_t size)
 {
-	size_t as;
+	size_t	as;
 
-	as = ALIGN8(size);
+	as = ((((size - 1) >> 3) << 3) + 8);
 	if (as <= TINYMAXSIZE)
 		return (TINY);
 	else if (as <= SMALLMAXSIZE)
@@ -31,24 +31,22 @@ t_ztype zone_type(size_t size)
 /**
  * return the size to be request from the
  * system using mmap 
- * 
+ * some programs request the size of a page.
+ * in this case the rounding will be to itself.
+ * no more space for block and zone headers 
 */
-size_t zone_size(t_ztype type, size_t size)
+size_t	zone_size(t_ztype type, size_t size)
 {
-	int		ps;
+	int	ps;
 
 	ps = getpagesize();
 	if (type == TINY)
 		size = sizeof(t_zone) + (sizeof(t_block) + TINYMAXSIZE) * MINBLOCKNUM;
 	else if (type == SMALL)
 		size = sizeof(t_zone) + (sizeof(t_block) + SMALLMAXSIZE) * MINBLOCKNUM;
-	// we need to get the minimum number of pages
-	// to hold that size
-	
-	/*some programs request the size of page size*/
-	/*in that case it will round to itself, and no more*/
-	/*space for zone header and block header*/
-	return roundup(size + sizeof(t_block) + sizeof(t_zone), ps);
+	else
+		size = size + sizeof(t_block) + sizeof(t_zone);
+	return (roundup(size, ps));
 }
 
 /**
@@ -63,7 +61,7 @@ t_zone	*init_new_zone(void *last, size_t size)
 	t_ztype		type;
 	size_t		to_alloc;
 	t_zone		*zone;
-	void 		*zstart;
+	void		*zstart;
 
 	zstart = last;
 	type = zone_type(size);
@@ -73,10 +71,9 @@ t_zone	*init_new_zone(void *last, size_t size)
 	zstart = mmap(zstart, to_alloc, PROT_READ | PROT_WRITE, \
 		MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 	if (zstart == MAP_FAILED)
-		return NULL;
-	// first zone
-	if (pbreak == NULL)
-		pbreak = zstart;
+		return (NULL);
+	if (g_pbreak == NULL)
+		g_pbreak = zstart;
 	zone = (t_zone *)zstart;
 	zone->next = NULL;
 	zone->prev = last;
@@ -95,7 +92,7 @@ t_zone	*init_new_zone(void *last, size_t size)
  * @return true 
  * @return false
  */
-bool free_zone(t_zone *z)
+bool	free_zone(t_zone *z)
 {
 	t_block		*b;
 
@@ -103,7 +100,7 @@ bool free_zone(t_zone *z)
 	while (b)
 	{
 		if (b->free == false)
-			return false;
+			return (false);
 		b = b->next;
 	}
 	return (true);
@@ -115,9 +112,9 @@ bool free_zone(t_zone *z)
  * @param b 
  * @return t_zone* 
  */
-t_zone *get_zone_from_block(t_block *b)
+t_zone	*get_zone_from_block(t_block *b)
 {
 	while (b && b->prev)
 		b = b->prev;
-	return (t_zone *)((char *)b - sizeof(t_zone));
+	return ((t_zone *)((char *)b - sizeof(t_zone)));
 }

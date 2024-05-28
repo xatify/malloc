@@ -16,5 +16,5 @@ size_t	ft_strlen(const char *str);
 
 void	ft_write(const char *str)
 {
-	write(STDOUT_FILENO, str, ft_strlen(str));			
+	write(STDOUT_FILENO, str, ft_strlen(str));
 }

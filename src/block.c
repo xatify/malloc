@@ -18,9 +18,9 @@
  * @param z new created zone
  * @param size the allocated region for that zone
  */
-void init_fblock(t_zone *z, size_t size)
+void	init_fblock(t_zone *z, size_t size)
 {
-	t_block *b;
+	t_block	*b;
 
 	b = (t_block *)((char *)z + sizeof(t_zone));
 	b->next = NULL;
@@ -36,14 +36,14 @@ void init_fblock(t_zone *z, size_t size)
  * @param sz the size block must be >= sz 
  * @return t_block* pointer to the free zone
  */
-t_block *find_fblock(t_zone *z, size_t sz)
+t_block	*find_fblock(t_zone *z, size_t sz)
 {
 	t_block		*b;
 
 	b = (t_block *)((char *)z + sizeof(t_zone));
 	while (b)
 	{
-		if ((b->free == true) && (b->size >= ALIGN8(sz)))
+		if ((b->free == true) && (b->size >= ((((sz - 1) >> 3) << 3) + 8)))
 			break ;
 		b = b->next;
 	}
@@ -61,36 +61,29 @@ t_block *find_fblock(t_zone *z, size_t sz)
  * we return the fist zone, then block that can
  * satisfy this requested size.
 */
-t_block *get_free_block(size_t size)
+t_block	*get_free_block(size_t size)
 {
 	t_zone	*z;
 	t_zone	*last;
-	t_block *b;
+	t_block	*b;
 
-	z = (t_zone *)pbreak;
+	z = (t_zone *)g_pbreak;
 	b = NULL;
 	last = z;
 	while (z)
 	{
-		// we check if this is the right zone given the size
 		if (z->type == zone_type(size))
 		{
 			b = find_fblock(z, size);
 			if (b)
 				return (b);
-			// no block found
 		}
-		// we go to next zone
 		last = z;
 		z = z->next;
 	}
-	// no block found on any zone.
-	// we need to create a new one
-	// and attach it to last zone
 	z = init_new_zone(last, size);
 	if (z == NULL)
 		return (NULL);
-	// this is guaranted to succed
 	return (find_fblock(z, size));
 }
 
@@ -99,21 +92,22 @@ t_block *get_free_block(size_t size)
  * needs to hold we try to split it
  * and return the right part of the split
 */
-t_block *try_split(t_block *b, size_t size)
+t_block	*try_split(t_block *b, size_t size)
 {
 	t_block		*newb;
 
-	if (b->size >= (ALIGN8(size) + sizeof(t_block)))
+	size = ((((size - 1) >> 3) << 3) + 8);
+	if (b->size >= (size + sizeof(t_block)))
 	{
-		newb = (t_block *)((char *)b + sizeof(t_block) + ALIGN8(size));
-		newb->size = b->size - (ALIGN8(size) + sizeof(t_block));
+		newb = (t_block *)((char *)b + sizeof(t_block) + size);
+		newb->size = b->size - (size + sizeof(t_block));
 		newb->free = true;
 		newb->prev = b;
 		if (b->next)
 			b->next->prev = newb;
 		newb->next = b->next;
 		b->next = newb;
-		b->size = ALIGN8(size);
+		b->size = size;
 	}
 	return (b);
 }
@@ -127,7 +121,7 @@ t_block *try_split(t_block *b, size_t size)
  */
 t_block	*coalesce_block(t_block *b)
 {
-	t_block *tmp;
+	t_block	*tmp;
 
 	if (b && b->next && b->next->free)
 	{
