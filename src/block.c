@@ -130,7 +130,6 @@ t_block	*coalesce_block(t_block *b)
 		if (tmp->next)
 			tmp->next->prev = b;
 		b->size = b->size + tmp->size + sizeof(t_block);
-		b->free = true;
 	}
 	return (b);
 }
