@@ -26,7 +26,7 @@ SRCS =		src/block.c	\
 			src/debug.c		\
 			src/free.c		\
 			src/malloc.c	\
-			src/realloc.c  	\
+			src/realloc.c	\
 			src/libft/ft_memcpy.c 	\
 			src/libft/ft_strlen.c	\
 			src/libft/ft_write.c	\
