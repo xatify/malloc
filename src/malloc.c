@@ -34,10 +34,8 @@ void	*malloc(size_t size)
 		return (NULL);
 	b = try_split(b, size);
 	b->free = false;
-	
 #ifdef DEBUG
 	show_alloc_mem();
 #endif
-
 	return ((char *)b + sizeof(t_block));
 }

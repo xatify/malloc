@@ -14,6 +14,35 @@
 
 void	release_zone(t_zone *z);
 
+t_block	*findb(void *ptr)
+{
+	t_zone	*z;
+	t_block	*b;
+
+	if (ptr)
+	{
+		z = (t_zone *)g_pbreak;
+		while (z)
+		{
+			if (ptr < (void *)z + z->size && ptr > (void *)z)
+			{
+				b = (void *)z + sizeof(t_zone);
+				while (b)
+				{
+					if (ptr < (void *)b + sizeof(t_block) + b->size)
+					{
+						if ((void *)b < ptr)
+							return (b);
+					}
+					b = b->next;
+				}
+			}
+			z = z->next;
+		}
+	}
+	return (NULL);
+}
+
 /**
 * we find the block the data pointer 
  * belongs to, then we find the zone
@@ -26,37 +55,11 @@ void	release_zone(t_zone *z);
  * @param ptr 
  */
 
-
-t_block *findb(void *ptr)
-{
-	if (ptr)
-	{
-			t_zone *z = (t_zone *)g_pbreak;
-			while (z)
-			{
-				if (ptr < (void *)z + z->size && ptr > (void *)z)
-				{
-						t_block *b;
-						b = (void *)z + sizeof(t_zone);
-						while (b)
-						{
-							if (ptr < (void *)b + sizeof(t_block) + b->size)
-							{
-								if ((void *)b < ptr)
-										return (b);
-							}
-							b = b->next;
-						}
-				}
-				z = z->next;
-			}
-	}
-	return NULL;
-}
 void	free(void *ptr)
 {
 	t_block	*b;
-//		t_zone	*z;
+	t_zone	*z;
+	t_zone	*tmp;
 
 	if (!ptr)
 		return ;
@@ -65,16 +68,13 @@ void	free(void *ptr)
 	{
 		b = coalesce_block(b);
 		b->free = true;
-		t_zone *z;
 		z = (t_zone *)g_pbreak;
-		t_zone *tmp;
-		while(z)
+		while (z)
 		{
 			tmp = z->next;
 			release_zone(z);
 			z = tmp;
-		}
-		
+		}	
 	}
 #ifdef DEBUG
 	show_alloc_mem();
@@ -94,4 +94,3 @@ void	release_zone(t_zone *z)
 		munmap((void *)z, z->size);
 	}
 }
-

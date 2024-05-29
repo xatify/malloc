@@ -31,7 +31,6 @@ void	*realloc(void *ptr, size_t size)
 		return (NULL);
 	ft_memcpy(p, ptr, b->size);
 	free(ptr);
-
 #ifdef DEBUG
 	show_alloc_mem();
 #endif

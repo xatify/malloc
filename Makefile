@@ -15,9 +15,11 @@ ifeq ($(HOSTTYPE),)
 endif
 
 CC		= gcc
-CFLAGS	= -g -DDEBUG -Wall -Wextra -Werror
+CFLAGS	= -DDEBUG -Wall -Wextra -Werror
 
 LIBFT =	src/libft/libft.a
+
+SYMLINK = libft_malloc.so
 
 TARGET=	libft_malloc_$(HOSTTYPE).so
 
@@ -38,6 +40,8 @@ all: $(TARGET)
 
 $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -shared $(OBJS) -o $(TARGET)
+	rm -rf $(SYMLINK)
+	ln -s $(TARGET) $(SYMLINK)
 
 .c.o:
 	$(CC) -c $(CFLAGS) -fPIC $< -o $@

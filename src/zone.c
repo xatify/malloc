@@ -45,7 +45,10 @@ size_t	zone_size(t_ztype type, size_t size)
 	else if (type == SMALL)
 		size = sizeof(t_zone) + (sizeof(t_block) + SMALLMAXSIZE) * MINBLOCKNUM;
 	else
-		size =  ((((size - 1) >> 4) << 4) + 16) + sizeof(t_block) + sizeof(t_zone);
+	{
+		size = ((((size - 1) >> 4) << 4) + 16);
+		size += sizeof(t_block) + sizeof(t_zone);
+	}
 	return (roundup(size + sizeof(t_zone) + sizeof(t_block), ps));
 }
 
