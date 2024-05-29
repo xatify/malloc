@@ -97,7 +97,7 @@ t_block	*try_split(t_block *b, size_t size)
 	t_block		*newb;
 
 	size = ((((size - 1) >> 4) << 4) + 16);
-	if (b->size >= (size + sizeof(t_block)))
+	if (b->size > (size + sizeof(t_block)))
 	{
 		newb = (t_block *)((char *)b + sizeof(t_block) + size);
 		newb->size = b->size - (size + sizeof(t_block));
@@ -126,11 +126,10 @@ t_block	*coalesce_block(t_block *b)
 	if (b && b->next && b->next->free)
 	{
 		tmp = b->next;
-		b->next = b->next->next;
+		b->next = tmp->next;
 		if (tmp->next)
 			tmp->next->prev = b;
 		b->size = b->size + tmp->size + sizeof(t_block);
 	}
-	b->free = true;
 	return (b);
 }

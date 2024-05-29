@@ -45,8 +45,8 @@ size_t	zone_size(t_ztype type, size_t size)
 	else if (type == SMALL)
 		size = sizeof(t_zone) + (sizeof(t_block) + SMALLMAXSIZE) * MINBLOCKNUM;
 	else
-		size = size + sizeof(t_block) + sizeof(t_zone);
-	return (roundup(size, ps));
+		size =  ((((size - 1) >> 4) << 4) + 16) + sizeof(t_block) + sizeof(t_zone);
+	return (roundup(size + sizeof(t_zone) + sizeof(t_block), ps));
 }
 
 /**
@@ -68,7 +68,10 @@ t_zone	*init_new_zone(void *last, size_t size)
 	zstart = mmap(NULL, to_alloc, PROT_READ | PROT_WRITE, \
 		MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 	if (zstart == MAP_FAILED)
+	{
+		ft_write("allocation failed\n");
 		return (NULL);
+	}
 	if (g_pbreak == NULL)
 		g_pbreak = zstart;
 	zone = (t_zone *)zstart;
@@ -111,7 +114,12 @@ bool	free_zone(t_zone *z)
  */
 t_zone	*get_zone_from_block(t_block *b)
 {
-	while (b && b->prev)
-		b = b->prev;
+	while (b)
+	{
+		if (b->prev)
+			b = b->prev;
+		else
+			break ;
+	}
 	return ((t_zone *)((char *)b - sizeof(t_zone)));
 }

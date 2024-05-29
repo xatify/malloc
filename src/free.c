@@ -12,7 +12,7 @@
 
 #include "malloc.h"
 
-static void	release_zone(t_zone *z);
+void	release_zone(t_zone *z);
 
 /**
 * we find the block the data pointer 
@@ -25,27 +25,71 @@ static void	release_zone(t_zone *z);
  * heap, we release it to the system. 
  * @param ptr 
  */
+
+
+t_block *findb(void *ptr)
+{
+	if (ptr)
+	{
+			t_zone *z = (t_zone *)g_pbreak;
+			while (z)
+			{
+				if (ptr < (void *)z + z->size && ptr > (void *)z)
+				{
+						t_block *b;
+						b = (void *)z + sizeof(t_zone);
+						while (b)
+						{
+							if (ptr < (void *)b + sizeof(t_block) + b->size)
+							{
+								if ((void *)b < ptr)
+										return (b);
+							}
+							b = b->next;
+						}
+				}
+				z = z->next;
+			}
+	}
+	return NULL;
+}
 void	free(void *ptr)
 {
 	t_block	*b;
-	t_zone	*z;
+//		t_zone	*z;
 
 	if (!ptr)
 		return ;
-	b = (t_block *)((char *)ptr - sizeof(t_block));
-	if (b->free == false)
+	b = findb(ptr);
+	if (b && b->free == false)
 	{
-		z = get_zone_from_block(b);
-		coalesce_block(b);
+		
+		if (b->next && b->next->free)
+		{
+			t_block *tmp;
+			tmp = b->next;
+			b->next = b->next->next;
+			tmp->prev = b;
+			b->size += sizeof(t_block) + tmp->size;
+		}
 		b->free = true;
-		release_zone(z);
+		t_zone *z;
+		z = (t_zone *)g_pbreak;
+		t_zone *tmp;
+		while(z)
+		{
+			tmp = z->next;
+			release_zone(z);
+			z = tmp;
+		}
+		
 	}
 #ifdef DEBUG
 	show_alloc_mem();
 #endif
 }
 
-static void	release_zone(t_zone *z)
+void	release_zone(t_zone *z)
 {
 	if (free_zone(z))
 	{
@@ -58,3 +102,4 @@ static void	release_zone(t_zone *z)
 		munmap((void *)z, z->size);
 	}
 }
+
