@@ -6,7 +6,7 @@
 #    By: abbouzid <abbouzid@student.42.fr>          +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2024/05/27 18:48:01 by abbouzid          #+#    #+#              #
-#    Updated: 2024/05/28 15:39:39 by abbouzid         ###   ########.fr        #
+#    Updated: 2024/05/29 18:48:06 by abbouzid         ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -15,7 +15,7 @@ ifeq ($(HOSTTYPE),)
 endif
 
 CC		= gcc
-CFLAGS	= -DDEBUG -Wall -Wextra -Werror
+CFLAGS	= -DNDEBUG -Wall -Wextra -Werror
 
 LIBFT =	src/libft/libft.a
 
@@ -52,5 +52,6 @@ clean:
 
 fclean: clean
 	rm -rf $(TARGET)
+	rm -rf $(SYMLINK)
 
 re: fclean all
