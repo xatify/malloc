@@ -65,16 +65,8 @@ void	free(void *ptr)
 		return ;
 	b = findb(ptr);
 	if (b && b->free == false)
-	{
-		
-		if (b->next && b->next->free)
-		{
-			t_block *tmp;
-			tmp = b->next;
-			b->next = b->next->next;
-			tmp->prev = b;
-			b->size += sizeof(t_block) + tmp->size;
-		}
+	{	
+		b = coalesce_block(b);
 		b->free = true;
 		z = (t_zone *)g_pbreak;
 		while (z)
