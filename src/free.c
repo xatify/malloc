@@ -36,21 +36,10 @@ void	free(void *ptr)
 	if (b->free == false)
 	{
 		z = get_zone_from_block(b);
-		if (z->type == LARGE)
-		{
-			while (b)
-			{
-				b = coalesce_block(b);
-				if (b->prev && b->prev->free)
-					b = coalesce_block(b->prev);
-				else
-					break ;
-			}
-		}
+		coalesce_block(b);
 		b->free = true;
 		release_zone(z);
 	}
-
 #ifdef DEBUG
 	show_alloc_mem();
 #endif
@@ -58,19 +47,14 @@ void	free(void *ptr)
 
 static void	release_zone(t_zone *z)
 {
-	t_zone	*tmp;
-
-	tmp = NULL;
-	if (z->next == NULL && free_zone(z))
+	if (free_zone(z))
 	{
-		if (z->prev) {
-			tmp = z->prev;
-			z->prev->next = NULL;
-		}
-		else
+		if (z->prev)
+			z->prev->next = z->next;
+		if (z->next)
+			z->next->prev = z->prev;
+		if (z->prev == NULL)
 			g_pbreak = NULL;
 		munmap((void *)z, z->size);
 	}
-	if (tmp)
-		release_zone(tmp);	
 }

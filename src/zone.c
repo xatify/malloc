@@ -63,12 +63,9 @@ t_zone	*init_new_zone(void *last, size_t size)
 	t_zone		*zone;
 	void		*zstart;
 
-	zstart = last;
 	type = zone_type(size);
 	to_alloc = zone_size(type, size);
-	if (last != NULL)
-		zstart = last + ((t_zone *)last)->size;
-	zstart = mmap(zstart, to_alloc, PROT_READ | PROT_WRITE, \
+	zstart = mmap(NULL, to_alloc, PROT_READ | PROT_WRITE, \
 		MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 	if (zstart == MAP_FAILED)
 		return (NULL);
