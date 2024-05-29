@@ -6,7 +6,7 @@
 /*   By: abbouzid <abbouzid@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/26 23:23:12 by abbouzid          #+#    #+#             */
-/*   Updated: 2024/05/27 17:22:03 by abbouzid         ###   ########.fr       */
+/*   Updated: 2024/05/28 14:53:21 by abbouzid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,29 +36,24 @@ void	free(void *ptr)
 	if (b->free == false)
 	{
 		z = get_zone_from_block(b);
-		if (z->type == LARGE)
-		{
-			while (b)
-			{
-				b = coalesce_block(b);
-				if (b->prev && b->prev->free)
-					b = coalesce_block(b->prev);
-				else
-					break ;
-			}
-		}
+		coalesce_block(b);
 		b->free = true;
 		release_zone(z);
 	}
+#ifdef DEBUG
+	show_alloc_mem();
+#endif
 }
 
 static void	release_zone(t_zone *z)
 {
-	if (z->next == NULL && free_zone(z))
+	if (free_zone(z))
 	{
 		if (z->prev)
-			z->prev->next = NULL;
-		else
+			z->prev->next = z->next;
+		if (z->next)
+			z->next->prev = z->prev;
+		if (z->prev == NULL)
 			g_pbreak = NULL;
 		munmap((void *)z, z->size);
 	}

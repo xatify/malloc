@@ -6,7 +6,7 @@
 /*   By: abbouzid <abbouzid@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/26 23:25:46 by abbouzid          #+#    #+#             */
-/*   Updated: 2024/05/26 23:48:26 by abbouzid         ###   ########.fr       */
+/*   Updated: 2024/05/28 14:15:50 by abbouzid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,7 @@ t_ztype	zone_type(size_t size)
 {
 	size_t	as;
 
-	as = ((((size - 1) >> 3) << 3) + 8);
+	as = ((((size - 1) >> 4) << 4) + 16);
 	if (as <= TINYMAXSIZE)
 		return (TINY);
 	else if (as <= SMALLMAXSIZE)
@@ -63,12 +63,9 @@ t_zone	*init_new_zone(void *last, size_t size)
 	t_zone		*zone;
 	void		*zstart;
 
-	zstart = last;
 	type = zone_type(size);
 	to_alloc = zone_size(type, size);
-	if (last != NULL)
-		zstart = last + ((t_zone *)last)->size;
-	zstart = mmap(zstart, to_alloc, PROT_READ | PROT_WRITE, \
+	zstart = mmap(NULL, to_alloc, PROT_READ | PROT_WRITE, \
 		MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
 	if (zstart == MAP_FAILED)
 		return (NULL);

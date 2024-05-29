@@ -6,7 +6,7 @@
 /*   By: abbouzid <abbouzid@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/05/26 23:27:06 by abbouzid          #+#    #+#             */
-/*   Updated: 2024/05/26 23:46:57 by abbouzid         ###   ########.fr       */
+/*   Updated: 2024/05/28 14:15:11 by abbouzid         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,7 +43,7 @@ t_block	*find_fblock(t_zone *z, size_t sz)
 	b = (t_block *)((char *)z + sizeof(t_zone));
 	while (b)
 	{
-		if ((b->free == true) && (b->size >= ((((sz - 1) >> 3) << 3) + 8)))
+		if ((b->free == true) && (b->size >= ((((sz - 1) >> 4) << 4) + 16)))
 			break ;
 		b = b->next;
 	}
@@ -96,7 +96,7 @@ t_block	*try_split(t_block *b, size_t size)
 {
 	t_block		*newb;
 
-	size = ((((size - 1) >> 3) << 3) + 8);
+	size = ((((size - 1) >> 4) << 4) + 16);
 	if (b->size >= (size + sizeof(t_block)))
 	{
 		newb = (t_block *)((char *)b + sizeof(t_block) + size);
