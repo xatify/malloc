@@ -49,7 +49,7 @@ size_t	zone_size(t_ztype type, size_t size)
 		size = ((((size - 1) >> 4) << 4) + 16);
 		size += sizeof(t_block) + sizeof(t_zone);
 	}
-	return (roundup(size + sizeof(t_zone) + sizeof(t_block), ps));
+	return (roundup(size, ps));
 }
 
 /**

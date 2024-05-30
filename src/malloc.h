@@ -66,8 +66,8 @@ typedef struct s_block
 /**
  * max data size in tiny/small zone
 */
-# define TINYMAXSIZE	32
-# define SMALLMAXSIZE	64
+# define TINYMAXSIZE	64
+# define SMALLMAXSIZE	1024
 
 /**
  * minimum number of blocks in tiny

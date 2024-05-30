@@ -65,7 +65,7 @@ void	free(void *ptr)
 		return ;
 	b = findb(ptr);
 	if (b && b->free == false)
-	{	
+	{
 		b = coalesce_block(b);
 		b->free = true;
 		z = (t_zone *)g_pbreak;
@@ -74,7 +74,7 @@ void	free(void *ptr)
 			tmp = z->next;
 			release_zone(z);
 			z = tmp;
-		}	
+		}
 	}
 #ifdef DEBUG
 	show_alloc_mem();
@@ -83,7 +83,7 @@ void	free(void *ptr)
 
 void	release_zone(t_zone *z)
 {
-	if (free_zone(z))
+	if (free_zone(z) && z->prev != NULL)
 	{
 		if (z->prev)
 			z->prev->next = z->next;
